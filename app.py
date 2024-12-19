@@ -1,6 +1,8 @@
 import streamlit as st
 import subprocess
 
+# st.write(f"Current theme: {st._config.get_option('theme.base')}")
+
 def download_video(url, is_playlist, quality, subtitles):
     # Base command
     cmd = ["yt-dlp"]
@@ -82,30 +84,55 @@ if download_button:
             st.error("An error occurred during the download. Please check the URL and try again.")
 
 
-
-# Footer
+# JavaScript to detect the theme
 st.markdown("""
-        <style>
+    <script>
+    window.onload = function() {
+        const theme = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+        document.body.setAttribute('data-streamlit-theme', theme);
+    }
+    </script>
+""", unsafe_allow_html=True)
+
+# Footer - dynamically styled
+footer_style = """
+    <style>
         .footer {
             position: fixed;
             bottom: 0;
             left: 0;
             width: 100%;
-            background-color: #0E1117;  /* Dark background */
             text-align: center;
             padding: 1px 0;
             font-size: 14px;
-            color: #FAFAFA;  /* White text color for high contrast */
+        }
+        .footer[data-streamlit-theme='dark'] {
+            background-color: #0E1117;  /* Dark background */
+            color: #FAFAFA;  /* White text */
+        }
+        .footer[data-streamlit-theme='light'] {
+            background-color: #f1f1f1;  /* Light background */
+            color: #333;  /* Dark text */
         }
         .footer a {
-            color: #FAFAFA;  /* Light purple color for links */
             text-decoration: none;
+        }
+        /* Email and phone number link color */
+        .footer a.email, .footer a.phone {
+            color: inherit;  /* Inherit the color from footer (white in dark, dark in light) */
         }
         .footer a:hover {
             text-decoration: underline;
         }
     </style>
+"""
+
+# Insert the footer styles
+st.markdown(footer_style, unsafe_allow_html=True)
+
+# Footer content
+st.markdown("""
     <div class="footer">
-        <p>Contact: <a href="mailto:asadsheikh257@gmail.com">asadsheikh257@gmail.com</a> | Phone: +923017481916</p>
+        <p>Contact: <a href="mailto:asadsheikh257@gmail.com" class="email">asadsheikh257@gmail.com</a> | Phone: <a href="tel:+923017481916" class="phone">+923017481916</a></p>
     </div>
 """, unsafe_allow_html=True)
