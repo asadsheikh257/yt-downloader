@@ -1,11 +1,15 @@
 import streamlit as st
 import subprocess
+import os
+import tempfile
 
-# st.write(f"Current theme: {st._config.get_option('theme.base')}")
-
+# Function to download video and save it to a temporary directory
 def download_video(url, is_playlist, quality, subtitles):
-    # Base command
-    cmd = ["yt-dlp"]
+    # Create a temporary directory to save the downloaded video
+    temp_dir = tempfile.mkdtemp()
+
+    # Base command for yt-dlp
+    cmd = ["yt-dlp", "-o", os.path.join(temp_dir, "%(title)s.%(ext)s")]
 
     # Add format options for video and audio
     if quality == "144p":
@@ -36,15 +40,21 @@ def download_video(url, is_playlist, quality, subtitles):
 
     # Playlist or single video
     if is_playlist:
-        cmd += ["-o", "%(playlist_index)s. %(title)s.%(ext)s"]
+        cmd += ["-o", os.path.join(temp_dir, "%(playlist_index)s. %(title)s.%(ext)s")]
     else:
-        cmd += ["-o", "%(title)s.%(ext)s"]
+        cmd += ["-o", os.path.join(temp_dir, "%(title)s.%(ext)s")]
 
     # Add the URL
     cmd.append(url)
 
     # Execute the command
     subprocess.run(cmd, check=True)
+
+    # Return the path to the downloaded file
+    downloaded_file = [f for f in os.listdir(temp_dir) if f.endswith('.mp4') or f.endswith('.mkv') or f.endswith('.webm')][0]
+    file_path = os.path.join(temp_dir, downloaded_file)
+
+    return file_path
 
 # Streamlit UI
 st.set_page_config(page_title="YouTube Downloader", layout="centered")
@@ -78,7 +88,18 @@ if download_button:
     else:
         try:
             with st.spinner("Downloading..."):
-                download_video(url, is_playlist, quality, subtitles)
+                # Download video and get the file path
+                file_path = download_video(url, is_playlist, quality, subtitles)
+                
+                # Provide a download link/button for the user to download the video
+                with open(file_path, "rb") as file:
+                    st.download_button(
+                        label="Download Video",
+                        data=file,
+                        file_name=os.path.basename(file_path),
+                        mime="video/mp4"
+                    )
+
             st.success("Download completed successfully!")
         except subprocess.CalledProcessError:
             st.error("An error occurred during the download. Please check the URL and try again.")
