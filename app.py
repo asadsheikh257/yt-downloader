@@ -2,16 +2,18 @@ import streamlit as st
 import subprocess
 import os
 import tempfile
+import shutil
 
-# Function to download video and save it to a temporary directory
+# Function to download video and save it to a public directory
 def download_video(url, is_playlist, quality, subtitles):
     # Create a temporary directory to save the downloaded video
-    temp_dir = tempfile.mkdtemp()
+    download_dir = 'downloads'
+    os.makedirs(download_dir, exist_ok=True)
 
     # Base command for yt-dlp
-    cmd = ["yt-dlp", "-o", os.path.join(temp_dir, "%(title)s.%(ext)s")]
+    cmd = ["yt-dlp", "-o", os.path.join(download_dir, "%(title)s.%(ext)s")]
 
-    # Add format options for video and audio
+    # Add format options for video and audio (same as before)
     if quality == "144p":
         cmd += ["-f", "bv*[height<=144][ext=mp4]+ba[ext=m4a]/bv*[ext=mp4]+ba[ext=m4a]/b[ext=mp4]"]
     elif quality == "240p":
@@ -40,9 +42,9 @@ def download_video(url, is_playlist, quality, subtitles):
 
     # Playlist or single video
     if is_playlist:
-        cmd += ["-o", os.path.join(temp_dir, "%(playlist_index)s. %(title)s.%(ext)s")]
+        cmd += ["-o", os.path.join(download_dir, "%(playlist_index)s. %(title)s.%(ext)s")]
     else:
-        cmd += ["-o", os.path.join(temp_dir, "%(title)s.%(ext)s")]
+        cmd += ["-o", os.path.join(download_dir, "%(title)s.%(ext)s")]
 
     # Add the URL
     cmd.append(url)
@@ -51,8 +53,8 @@ def download_video(url, is_playlist, quality, subtitles):
     subprocess.run(cmd, check=True)
 
     # Return the path to the downloaded file
-    downloaded_file = [f for f in os.listdir(temp_dir) if f.endswith('.mp4') or f.endswith('.mkv') or f.endswith('.webm')][0]
-    file_path = os.path.join(temp_dir, downloaded_file)
+    downloaded_file = [f for f in os.listdir(download_dir) if f.endswith('.mp4') or f.endswith('.mkv') or f.endswith('.webm')][0]
+    file_path = os.path.join(download_dir, downloaded_file)
 
     return file_path
 
